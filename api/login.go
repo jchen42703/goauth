@@ -4,11 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/gomodule/redigo/redis"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(db *sql.DB) http.HandlerFunc {
+func Login(db *sql.DB, cache redis.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse and decode the request body into a new `Credentials` instance
 		creds := &Credentials{}
@@ -49,5 +52,23 @@ func Login(db *sql.DB) http.HandlerFunc {
 
 		// If we reach this point, that means the users password was correct, and that they are authorized
 		// The default 200 status is sent
+		// Create a new random session token
+		sessionToken := uuid.NewV4().String()
+		// Set the token in the cache, along with the user whom it represents
+		// The token has an expiry time of 120 seconds
+		_, err = cache.Do("SETEX", sessionToken, "120", creds.Username)
+		if err != nil {
+			// If there is an error in setting the cache, return an internal server error
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Finally, we set the client cookie for "session_token" as the session token we just generated
+		// we also set an expiry time of 120 seconds, the same as the cache
+		http.SetCookie(w, &http.Cookie{
+			Name:    "session_token",
+			Value:   sessionToken,
+			Expires: time.Now().Add(120 * time.Second),
+		})
 	}
 }
