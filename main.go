@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gofiber/fiber"
 	"github.com/gomodule/redigo/redis"
 	_ "github.com/lib/pq" // <------------ here
 
@@ -55,6 +56,15 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to init cache: ", err)
 	}
+
+	app := fiber.New()
+	// GET /api/list
+	app.Get("/api/list", func(c *fiber.Ctx) error {
+		fmt.Println("🥉 Last handler")
+		return c.SendString("Hello, World 👋!")
+	})
+
+	log.Fatal(app.Listen(":3000"))
 
 	// "Signin" and "Signup" are handler that we will implement
 	http.HandleFunc("/login", controllers.Login(db, cache))
