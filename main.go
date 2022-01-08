@@ -10,7 +10,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	_ "github.com/lib/pq" // <------------ here
 
-	"github.com/jchen42703/goauth/api"
+	"github.com/jchen42703/goauth/controllers"
 )
 
 // The "db" package level variable will hold the reference to our database instance
@@ -57,10 +57,10 @@ func main() {
 	}
 
 	// "Signin" and "Signup" are handler that we will implement
-	http.HandleFunc("/login", api.Login(db, cache))
-	http.HandleFunc("/signup", api.Signup(db))
-	http.HandleFunc("/welcome", api.Welcome(db, cache))
-	http.HandleFunc("/refresh", api.Refresh(db, cache))
+	http.HandleFunc("/login", controllers.Login(db, cache))
+	http.HandleFunc("/signup", controllers.Signup(db))
+	http.HandleFunc("/welcome", controllers.Welcome(db, cache))
+	http.HandleFunc("/refresh", controllers.Refresh(db, cache))
 	// http.HandleFunc("/welcome", Welcome)
 
 	// start the server on port 8000
